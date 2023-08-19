@@ -1,0 +1,58 @@
+/* Importing a font from google fonts: Kalma */
+@import url('https://fonts.googleapis.com/css2?family=Kalam&display=swap');
+
+
+:root {
+    --lavender-web: #d8d8f6ff;
+    --african-violet: #b18fcfff;
+    --rose-quartz: #978897ff;
+    --davys-gray: #494850ff;
+    --raisin-black: #2c2c34ff;
+}
+
+body {
+    background-color: var(--raisin-black);
+    margin: 10px;
+    color: var(--lavender-web);
+}
+
+.navbar-my-cols {
+    background-color: var(--davys-gray);
+}
+
+.logo-font {
+    font-family: 'Kalam', cursive;
+    color: var(--lavender-web);
+}
+
+.light-col {
+    color: var(--lavender-web);
+}
+
+/* Link colours */
+.nav-link {
+    color: var(--african-violet);
+}
+
+.nav-link:hover {
+    color: var(--lavender-web);
+}
+
+.btn-primary {
+    background-color: var(--african-violet);
+    border-color: var(--african-violet);
+    color: var(--raisin-black);
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: var(--raisin-black);
+    border-color: var(--african-violet);
+    color: var(--african-violet);
+    font-weight: bold;
+}
+
+.reg-form {
+    text-align: center;
+    display: inline-block;
+}
