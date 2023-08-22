@@ -81,7 +81,7 @@ body {
 }
 
 /* New scribble box */
-.new-scrib {
+.scrib-box {
     background-color: var(--davys-gray);
     border: 3px solid var(--rose-quartz);
     width: 75%;
@@ -111,3 +111,7 @@ input::placeholder {
     opacity: 1;
 }
 
+/* Shadow class */
+.custom-shadow {
+    box-shadow: 0 4px 15px rgba(216, 216, 246, 0.5); 
+}

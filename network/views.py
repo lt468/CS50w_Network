@@ -1,14 +1,27 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User
+from .models import User, Post, Like, Follow
 
+def get_username_by_id(request):
+    owner_id = request.GET.get('owner_id')
+    try:
+        user = User.objects.get(id=owner_id)
+        return JsonResponse({'username': user.username})
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+def get_data(request):
+    data = Post.objects.all().values()
+    return JsonResponse(list(data), safe=False)
 
 def index(request):
-    return render(request, "network/index.html")
+    return render(request, "network/index.html", {
+        "posts": Post.objects.all()
+        })
 
 
 def login_view(request):

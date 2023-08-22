@@ -2,9 +2,9 @@
 
 {% block body %}
 
-<!-- Create flex box to align all items vertically down the middle -->
+<!-- Responsible for the new scribble box... -->
 <div class="d-flex justify-content-center">
-    <div class="m-3 p-5 new-scrib rounded-3">
+    <div class="m-3 p-5 scrib-box rounded-3 custom-shadow">
         {% if user.is_authenticated %}
         <h2 class="scrib-font">scribble something...</h2>
         <form class="new_scrib" action="#" method="post">
@@ -18,6 +18,7 @@
             </div>
         </form>
         {% else %}
+        <!-- ...or the log in to scribble box -->
         <div class="d-flex justify-content-center flex-column align-items-center">
             <h2 class="scrib-font">log in to scribble something...</h2>
             <p><a class="nav-link" href="{% url 'login' %}"> Log In here.</a></p>
@@ -25,4 +26,17 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Displaying all the existing posts (on the home screen - index) -->
+{% if posts %}
+<div id="display_scrib" class="d-flex flex-column align-items-center justify-content-center">
+</div>
+{% else %}
+<div class="d-flex justify-content-center">
+    <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
+        <h2 class="scrib-font">no posts! check back soon or create one above</h2>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

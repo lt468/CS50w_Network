@@ -12,7 +12,7 @@ class Post(models.Model):
     time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Post: {self.id} by {self.owner}, starts with: {self.contents[:20]}"
+        return f"Post: {self.id} by {self.owner}, starts with: {self.contents[:50]}..."
 
 # Many users can like many posts and many posts can be liked by many users
 class Like(models.Model):
