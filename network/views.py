@@ -1,10 +1,29 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 
 from .models import User, Post, Like, Follow
+
+@require_POST
+@csrf_protect
+def post_scribble(request):
+    try:
+        data = json.loads(request.body)
+        scribble_content = data.get('contents')
+        user_id = request.user.id  # User's ID from authentication
+
+        # Create a new scribble associated with the user's ID
+        scribble = Post.objects.create(contents=scribble_content, owner_id=user_id, likes=0)
+
+        return JsonResponse({"message": "Scribble posted successfully"})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 def get_username_by_id(request):
     owner_id = request.GET.get('owner_id')
@@ -15,14 +34,14 @@ def get_username_by_id(request):
         return JsonResponse({'error': 'User not found'}, status=404)
 
 def get_data(request):
-    data = Post.objects.all().values()
+    # Get data in reverse chronological order
+    data = Post.objects.all().order_by('-time').values()
     return JsonResponse(list(data), safe=False)
 
 def index(request):
     return render(request, "network/index.html", {
         "posts": Post.objects.all()
         })
-
 
 def login_view(request):
     if request.method == "POST":

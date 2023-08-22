@@ -7,7 +7,7 @@
     <div class="m-3 p-5 scrib-box rounded-3 custom-shadow">
         {% if user.is_authenticated %}
         <h2 class="scrib-font">scribble something...</h2>
-        <form class="new_scrib" action="#" method="post">
+        <form id="submit_new_scrib" class="new_scrib" action="#" method="post">
             {% csrf_token %}
             <textarea class="form-control" id="new_scribble" rows="3"></textarea>
             <div class="mt-2 d-flex justify-content-between">
@@ -28,15 +28,14 @@
 </div>
 
 <!-- Displaying all the existing posts (on the home screen - index) -->
-{% if posts %}
 <div id="display_scrib" class="d-flex flex-column align-items-center justify-content-center">
+    {% if posts %}
+        <!-- Posts will be displayed here -->
+    {% else %}
+        <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
+            <h2 class="scrib-font">no posts! check back soon or create one above</h2>
+        </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="d-flex justify-content-center">
-    <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
-        <h2 class="scrib-font">no posts! check back soon or create one above</h2>
-    </div>
-</div>
-{% endif %}
 
 {% endblock %}
