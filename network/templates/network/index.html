@@ -1,5 +1,28 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    TODO
+
+<!-- Create flex box to align all items vertically down the middle -->
+<div class="d-flex justify-content-center">
+    <div class="m-3 p-5 new-scrib rounded-3">
+        {% if user.is_authenticated %}
+        <h2 class="scrib-font">scribble something...</h2>
+        <form class="new_scrib" action="#" method="post">
+            {% csrf_token %}
+            <textarea class="form-control" id="new_scribble" rows="3"></textarea>
+            <div class="mt-2 d-flex justify-content-between">
+                <div class="mt-1">
+                    <span id="character-count">Character count: </span><span id="chars">0</span><span>/280</span>
+                </div>
+                <button id="send" type="submit" value="send" class="btn btn-primary scrib-font">submit</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="d-flex justify-content-center flex-column align-items-center">
+            <h2 class="scrib-font">log in to scribble something...</h2>
+            <p><a class="nav-link" href="{% url 'login' %}"> Log In here.</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

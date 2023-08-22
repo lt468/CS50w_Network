@@ -20,7 +20,21 @@ body {
     background-color: var(--davys-gray);
 }
 
-.logo-font {
+
+.navbar-brand:hover {
+    color: var(--lavender-web);
+}
+
+.navbar-brand:active {
+    color: var(--lavender-web);
+}
+
+/* New font */
+.scrib-font {
+    font-family: 'Kalam', cursive;
+}
+
+.navbar-brand {
     font-family: 'Kalam', cursive;
     color: var(--lavender-web);
 }
@@ -52,7 +66,48 @@ body {
     font-weight: bold;
 }
 
+/* Disabled Button */
+.btn-primary:disabled {
+    background-color: var(--lavender-web);
+    border-color: var(--lavender-web);
+    color: var(--davys-gray);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 .reg-form {
     text-align: center;
     display: inline-block;
 }
+
+/* New scribble box */
+.new-scrib {
+    background-color: var(--davys-gray);
+    border: 3px solid var(--rose-quartz);
+    width: 75%;
+    height: auto;
+    box-sizing: border-box;
+    min-height: 100%;
+}
+
+/* Textarea */
+.form-control, .form-control:focus{
+    background-color: var(--raisin-black);
+    border-color: var(--rose-quartz);
+    color: var(--lavender-web);
+    resize: none;
+    outline:none !important;
+    outline-width: 0 !important;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    height: 50%;
+    overflow: hidden;
+}
+
+/* Input colour */
+input::placeholder {
+    color: var(--lavender-web);
+    opacity: 1;
+}
+

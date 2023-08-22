@@ -6,16 +6,19 @@
         <title>scribble</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+        <!-- Favicons -->
         <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
         <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
         <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+        <script src="{% static 'network/network.js' %}"></script>
     </head>
     <body>
         <nav class="rounded navbar navbar-my-cols navbar-expand-sm">
             <div class="container-fluid">
-                <a class="navbar-brand logo-font" href="#">
+                <a class="navbar-brand" href="{% url 'index' %}">
                     <img src="{% static 'favicon/favicon-32x32.png' %}" alt="scribble_logo" width="32" height="32" class="d-inline-block align-text-top">
+                    scribble
                 </a>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
