@@ -1,6 +1,16 @@
 /* Importing a font from google fonts: Kalma */
 @import url('https://fonts.googleapis.com/css2?family=Kalam&display=swap');
 
+/* Defining show animation */
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
 
 :root {
     --lavender-web: #d8d8f6ff;
@@ -88,6 +98,10 @@ body {
     height: auto;
     box-sizing: border-box;
     min-height: 100%;
+    animation-name: show;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    animation-play-state: running;
 }
 
 /* Textarea */
@@ -114,4 +128,17 @@ input::placeholder {
 /* Shadow class */
 .custom-shadow {
     box-shadow: 0 4px 15px rgba(216, 216, 246, 0.5); 
+}
+
+.btn-outline-danger {
+    border-color: var(--lavender-web);
+}
+
+/* Filled Heart Icon */
+.liked-heart {
+    fill: red;
+}
+
+.unliked-heart {
+    fill: var(--lavender-web);
 }

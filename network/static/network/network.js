@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         await postNewScribble();
     });
 
+    // Checking if user has clicked on the DOM
+    document.addEventListener('click', event => {
+        updateLike(event);
+    });
+
     // Load the posts by default
     getPosts();
 });
@@ -71,18 +76,26 @@ function changeHeight(area) {
     area.style.height = (area.scrollHeight) + 'px';
 }
 
-// Get the posts via the API
+// Get the posts via an API
 function getPosts() {
     fetch('/api/data/')
         .then(response => response.json())
         .then(data => {
-            // Checking first to see if any posts
-            if (data.length) {
-                // Clear the existing content
-                document.querySelector('#display_scrib').innerHTML = '';
-            }
+            // Sort data in reverse chronological order based on timestamp
+            data.sort((a, b) => {
+                const timeA = new Date(a.time);
+                const timeB = new Date(b.time);
+                return timeB - timeA;
+            });
 
-            // Iterate through the data and display posts
+            // Clear the existing content
+            document.querySelector('#display_scrib').innerHTML = '';
+            // Clear the text area
+            document.querySelector('#new_scribble').value = '';
+            // Clear the character count
+            document.querySelector('#chars').innerHTML = '0';
+
+            // Iterate through the sorted data and display posts
             data.forEach(post => {
                 getUserName(post['owner_id'], username => {
                     displayPost(post, username);
@@ -131,24 +144,87 @@ function displayPost(post, username) {
     
     const time = formatTimestamp(post['time']);
 
-    // Don't use form, just do an onsubmit listen for when the button is pressed
-    // or maybe you have to use form because it is HTML
+    // Check if the logged-in user has liked the post
+    const userLikedPost = post['user_has_liked']; // Replace with the actual data indicating whether the user has liked the post
+
     scribble.innerHTML = `
         <h2 class="scrib-font">${username} scribbled...</h2>
         <p>${post['contents']}</p>
         <div class="d-flex justify-content-between">
             <span><small class="scrib-font">on ${time}</small></span>
             <span>
-                <button type="button" id="like_button" class="me-3 btn btn-outline-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                    <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"></path>
-                    </svg>
-                </button>${post['likes']}
+                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                </svg>
+                </button><span id="like-count-${post['id']}">${post['likes']}</span>
             </span>
         </div>
-        `;
+    `;
 
     // Add to the DOM
     document.getElementById('display_scrib').append(scribble);
 }
 
+async function updateLike(event) {
+    // Gets the nearest like button on the DOM
+    let element = event.target.closest('.btn-outline-danger');
+    
+    // Check if the clicked element is the like button
+    if (element && element.getAttribute('id')) {
+        console.log('Like button clicked');
+        
+        // Try to update like
+        try {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            };
+
+            const response = await fetch('/api/update_like/', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    id: element.getAttribute('id')
+                })
+            });
+
+            if (response.ok) {
+                // Check if the response indicates a new like was added or removed
+                const responseData = await response.json();
+                const isNewLike = responseData.is_new_like;
+
+                const likeCountElement = document.getElementById(`like-count-${element.getAttribute('id')}`);
+                
+                // Get the correct heart
+                const heartElement = document.getElementById(`heart_${element.getAttribute('id')}`);
+
+                if (likeCountElement) {
+                    const currentLikeCount = parseInt(likeCountElement.textContent);
+
+                    // Update the like count value based on whether it's a new like or not
+                    if (isNewLike) {
+                        likeCountElement.textContent = currentLikeCount + 1; // Increment like count
+                        heartElement.classList.replace('unliked-heart', 'liked-heart');
+                    } else {
+                        if (currentLikeCount > 0) {
+                            likeCountElement.textContent = currentLikeCount - 1; // Decrement like count
+                            heartElement.classList.replace('liked-heart', 'unliked-heart');
+                        }
+                    }
+                    console.log('Like updated successfully');
+
+                } else {
+                    console.error('Error updating like count');
+                }
+            } else {
+                console.error('Error updating like value');
+            }
+        } catch (error) {
+            console.error('Error updating like value: ', error);
+        }
+    } else {
+        console.log('Clicked element is not the like button');
+    }
+}

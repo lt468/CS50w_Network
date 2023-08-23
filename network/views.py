@@ -1,13 +1,47 @@
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.db.models import Exists, OuterRef
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 
 from .models import User, Post, Like, Follow
+
+@require_POST
+@csrf_protect
+def update_like(request):
+    try:
+        data = json.loads(request.body)
+        like_id = data.get('id')
+        user_id = request.user.id  # User's ID from authentication
+
+        # Check if there's an existing like from the user
+        existing_like = Like.objects.filter(user_id=user_id, post_id=like_id).first()
+
+        if existing_like:
+            # If there's an existing like, remove it
+            existing_like.delete()
+            is_new_like = False
+        else:
+            # If there's no existing like, create a new one
+            Like.objects.create(user_id=user_id, post_id=like_id)
+            is_new_like = True
+
+        # Count the number of likes for the specific post using aggregation
+        post_likes_count = Like.objects.filter(post_id=like_id).count()
+
+        # Update the likes field of the Post instance
+        post = Post.objects.get(id=like_id)
+        post.likes = post_likes_count
+        post.save()
+
+        return JsonResponse({"message": "Like updated successfully", "is_new_like": is_new_like})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 @require_POST
 @csrf_protect
@@ -34,9 +68,10 @@ def get_username_by_id(request):
         return JsonResponse({'error': 'User not found'}, status=404)
 
 def get_data(request):
-    # Get data in reverse chronological order
-    data = Post.objects.all().order_by('-time').values()
-    return JsonResponse(list(data), safe=False)
+    user_id = request.user.id
+    # Get the data and check if user has liked that post
+    data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
+    return JsonResponse(list(data.values()), safe=False)
 
 def index(request):
     return render(request, "network/index.html", {
