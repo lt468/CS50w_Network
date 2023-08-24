@@ -10,6 +10,46 @@ from django.views.decorators.csrf import csrf_protect
 
 from .models import User, Post, Like, Follow
 
+def update_follow(request):
+    # Try to update the follow
+    try:
+        data = json.loads(request.body)
+        # Profile being viewed
+        following_user = data.get('id')
+        # User who is logged in
+        follower_user = request.user.id  # User's ID from authentication
+
+        # Check if there's an existing follow from the user
+        follower_user_obj = User.objects.get(id=follower_user)
+        following_user_obj = User.objects.get(id=following_user)
+        existing_follow = Follow.objects.filter(follower=follower_user_obj, following=following_user_obj).first()
+
+        if existing_follow:
+            # If there's an existing follow, remove it
+            existing_follow.delete()
+            is_new_follow = False
+        else:
+            # If there's no existing follow, create a new one
+            Follow.objects.create(follower=follower_user_obj, following=following_user_obj)
+            is_new_follow = True
+
+        # Count the number of followers
+        follower_cout = Follow.objects.filter(following=following_user).count()
+
+        # Count the number of followers
+        following_count = Follow.objects.filter(follower=follower_user).count()
+
+        return JsonResponse({"message": "Following updated successfully", 
+                             "follower_cout": follower_cout,
+                             "following_count": following_count,
+                             "is_new_follow": is_new_follow})
+
+    except Exception as e:
+        print(e)
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+
 def profile(request, owner_id):
     owner_name = User.objects.get(pk=owner_id)
     user_posts = Post.objects.filter(owner=owner_id)
@@ -20,13 +60,19 @@ def profile(request, owner_id):
     # Count the number of followers a user has
     followers = Follow.objects.filter(following=owner_id).count()
     following = Follow.objects.filter(follower=owner_id).count()
+        
+    # Check if there's an existing follow from the user
+    follower_user = request.user.id  # User's ID from authentication
+    follower_user_obj = User.objects.get(id=follower_user)
+    existing_follow = Follow.objects.filter(follower=follower_user_obj, following=owner_name).first()
 
     return render(request, "network/profile.html", {
         "owner_id": owner_id,
         "owner_name": owner_name,
         "followers": followers,
         "following": following,
-        "user_posts": user_posts
+        "user_posts": user_posts,
+        "follow_exists": existing_follow
         })
 
 @require_POST

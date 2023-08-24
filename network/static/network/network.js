@@ -30,11 +30,76 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // Checking if user has clicked on the DOM
     document.addEventListener('click', event => {
-        console.log(event);
+        if (event.target.classList.contains('follow-btn')) {
+            const followBtn = event.target;
+            event.preventDefault(); // Stops the refresh of the page
+            updateFollow(event.target.getAttribute('id'), followBtn)
+        }
         updateLike(event);
     });
 
 });
+
+async function updateFollow(id, btn) {
+    // Want to add or remove a follow
+
+    try {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        };
+
+        const response = await fetch('/api/update_follow/', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                id: id
+            })
+        });
+
+        if (response.ok) {
+            const responseData = await response.json();
+            const isNewFollow = responseData['is_new_follow'];
+
+            // First get the following and then update the following count - should be taken care of when page is refreshed
+            // const followingElement = document.getElementById('following');
+
+            // Get the followers
+            const followerElement = document.getElementById('followers');
+
+            // First change the follow button if the user is already following the profile
+            if (isNewFollow) {
+                btn.classList.replace('btn-primary', 'btn-outline-primary')
+                btn.innerHTML = 'unfollow';
+            } else {
+                btn.classList.replace('btn-outline-primary', 'btn-primary')
+                btn.innerHTML = 'follow';
+            }
+
+            //if (likeCountElement) {
+            //    const currentLikeCount = parseInt(likeCountElement.textContent);
+
+            //    if (isNewLike) {
+            //        likeCountElement.textContent = currentLikeCount + 1; 
+            //        heartElement.classList.replace('unliked-heart', 'liked-heart');
+            //    } else {
+            //        if (currentLikeCount > 0) {
+            //            likeCountElement.textContent = currentLikeCount - 1; 
+            //            heartElement.classList.replace('liked-heart', 'unliked-heart');
+            //        }
+            //    }
+            //    console.log('Like updated successfully');
+            //} else {
+        //        console.error('Error updating like count');
+        //    }
+        } else {
+            console.error('Error updating follow value');
+        }
+    } catch (error) {
+        console.error('Error updating follow value with error: ', error);
+    }
+}
 
 // Add new scribble
 async function postNewScribble() {

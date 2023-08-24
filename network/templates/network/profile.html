@@ -1,7 +1,6 @@
 {% extends "network/layout.html" %}
 {% block head %}
 <title>the scribbles of {{owner_name}}</title>
-{% csrf_token %}
 {% endblock%}
 
 {% block body %}
@@ -10,11 +9,16 @@
         <h1 class="scrib-font">{{ owner_name }}</h1>
     </div>
     <div class="margin-for-flex">
-        <button id="{{ owner_id }}" type="submit" value="follow" class="btn btn-primary scrib-font">follow</button>
+        <form method="post" action="#">
+            {% csrf_token %} 
+            <button id="{{ owner_id }}" type="submit" value="follow" class="btn scrib-font follow-btn {% if follow_exists %}btn-outline-primary{% else %}btn-primary{% endif %}">
+                {% if follow_exists %}unfollow{% else %}follow{% endif %}
+            </button>
+        </form>
     </div>
 </div>
 <div class="ms-5 flex-container">
-    <span class="me-5"><strong>followers: {{ followers }} </strong></span><span class="me-5"><strong>following: {{ following }} </strong></span>
+    <span id="followers" class="me-5"><strong>followers: {{ followers }} </strong></span><span id="following" class="me-5"><strong>following: {{ following }} </strong></span>
 </div>
 
 <!-- Displaying all the existing posts (on the home screen - index) -->
