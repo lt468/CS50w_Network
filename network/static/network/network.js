@@ -1,25 +1,38 @@
 // Listen to the page after it is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Get the scribble area
-    let scribbleArea = document.querySelector('#new_scribble');
+    if (window.location.pathname === '/') {
+        // Get the scribble area
+        let scribbleArea = document.querySelector('#new_scribble');
 
-    // Update the character count
-    scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
+        // Update the character count
+        scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
 
-    // Listen for submit button
-    document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
-        event.preventDefault();
+        // Listen for submit button
+        document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
+            event.preventDefault();
 
-        await postNewScribble();
-    });
+            await postNewScribble();
+        });
+        
+        // Load the posts by default
+        getPosts('all');
+    } else {
+        // Get URL
+        const currentURL = window.location.pathname;
 
+        // Use regex to get integer
+        const user_int = currentURL.match(/\/(\d+)$/);
+        const integerAtEnd = parseInt(user_int[1]);
+
+        getPosts(integerAtEnd);
+    }
+
+  
     // Checking if user has clicked on the DOM
     document.addEventListener('click', event => {
         updateLike(event);
     });
 
-    // Load the posts by default
-    getPosts();
 });
 
 // Add new scribble
@@ -41,7 +54,7 @@ async function postNewScribble() {
 
         if (response.ok) {
             console.log('Scribble posted successfully');
-            getPosts(); // Call getPosts() only if the post was successfully added
+            getPosts('all'); // Call getPosts() only if the post was successfully added
         } else {
             console.error('Error posting scribble');
         }
@@ -76,52 +89,42 @@ function changeHeight(area) {
     area.style.height = (area.scrollHeight) + 'px';
 }
 
-// Get the posts via an API
-function getPosts() {
-    fetch('/api/data/')
-        .then(response => response.json())
-        .then(data => {
-            // Sort data in reverse chronological order based on timestamp
-            data.sort((a, b) => {
-                const timeA = new Date(a.time);
-                const timeB = new Date(b.time);
-                return timeB - timeA;
-            });
+// Get the posts via an API 
+async function getPosts(who) {
+    try {
+        const response = await fetch('/api/data/');
+        const data = await response.json();
+        const filteredData = filterWho(data, who);
 
-            // Clear the existing content
-            document.querySelector('#display_scrib').innerHTML = '';
-            // Clear the text area
-            document.querySelector('#new_scribble').value = '';
-            // Clear the character count
-            document.querySelector('#chars').innerHTML = '0';
+        // Clear the existing content, text area, and character count
+        document.querySelector('#display_scrib').innerHTML = '';
+        new_srib_el = document.querySelector('#new_scribble')
+        chars_el = document.querySelector('#chars')
+        if (!new_srib_el === null) {
+            new_srib_el.value = '';
+            chers_el.innerHTML = 0;
+        } 
 
-            // Iterate through the sorted data and display posts
-            data.forEach(post => {
-                getUserName(post['owner_id'], username => {
-                    displayPost(post, username);
-                });
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
+        // Iterate through the data and display posts
+        for (const post of filteredData) {
+            const username = await getUserNameAsync(post['owner_id']);
+            displayPost(post, username);
+        }
+    } catch (error) {
+        console.error('Error fetching or processing data:', error);
+    }
 }
 
-// API to fetch the username using owner_id
-function getUserName(ownerId, callback) {
-    fetch(`/api/get_username_by_id/?owner_id=${ownerId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.username) {
-                callback(data.username);
-            } else {
-                callback('Unknown User');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching username:', error);
-            callback('Unknown User');
-        });
+// Function to fetch username using async/await
+async function getUserNameAsync(ownerId) {
+    try {
+        const response = await fetch(`/api/get_username_by_id/?owner_id=${ownerId}`);
+        const data = await response.json();
+        return data.username || 'Unknown User';
+    } catch (error) {
+        console.error('Error fetching username:', error);
+        return 'Unknown User';
+    }
 }
 
 // Formatting the time
@@ -148,7 +151,7 @@ function displayPost(post, username) {
     const userLikedPost = post['user_has_liked']; // Replace with the actual data indicating whether the user has liked the post
 
     scribble.innerHTML = `
-        <h2 class="scrib-font">${username} scribbled...</h2>
+        <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
         <p>${post['contents']}</p>
         <div class="d-flex justify-content-between">
             <span><small class="scrib-font">on ${time}</small></span>
@@ -226,5 +229,15 @@ async function updateLike(event) {
         }
     } else {
         console.log('Clicked element is not the like button');
+    }
+}
+
+// Filter function to display certain (or all posts)
+function filterWho(data, who) {
+
+    if (who === "all") {
+        return data;
+    } else {
+        return data.filter(data => data['owner_id'] === who);
     }
 }

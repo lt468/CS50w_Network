@@ -1,0 +1,30 @@
+{% extends "network/layout.html" %}
+{% block head %}
+<title>the scribbles of {{owner_name}}</title>
+{% endblock%}
+
+{% block body %}
+<div class="flex-container">
+    <div class="margin-for-flex">
+        <h1 class="scrib-font">{{ owner_name }}</h1>
+    </div>
+    <div class="margin-for-flex">
+        <button id="follow" type="submit" value="follow" class="btn btn-primary scrib-font">follow</button>
+    </div>
+</div>
+<div class="ms-5 flex-container">
+    <span class="me-5"><strong>followers: {{ followers }} </strong></span><span class="me-5"><strong>following: {{ following }} </strong></span>
+</div>
+
+<!-- Displaying all the existing posts (on the home screen - index) -->
+<div id="display_scrib" class="d-flex flex-column align-items-center justify-content-center">
+    {% if user_posts %}
+        <!-- Posts will be displayed here -->
+    {% else %}
+        <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
+            <h2 class="scrib-font">no posts! check back soon or create one above</h2>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

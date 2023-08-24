@@ -62,7 +62,42 @@ body {
     color: var(--lavender-web);
 }
 
-.btn-primary {
+/* For links to profiles */
+.not-active,
+.not-active:active
+.not-active:visited {
+    color: var(--lavender-web);
+    text-decoration: none;
+}
+
+.not-active:hover {
+    color: var(--african-violet);
+    text-decoration: none;
+}
+
+
+.btn-outline-primary {
+    background-color: var(--raisin-black);
+    border-color: var(--african-violet);
+    color: var(--african-violet);
+    font-weight: bold;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--african-violet);
+    border-color: var(--african-violet);
+    color: var(--raisin-black);
+    font-weight: bold;
+}
+
+.btn-outline-primary:active {
+    background-color: var(--african-violet) !important;
+    border-color: var(--african-violet) !important;
+    color: var(--raisin-black) !important;
+    font-weight: bold !important;
+}
+
+.btn-primary{
     background-color: var(--african-violet);
     border-color: var(--african-violet);
     color: var(--raisin-black);
@@ -74,6 +109,13 @@ body {
     border-color: var(--african-violet);
     color: var(--african-violet);
     font-weight: bold;
+}
+
+.btn-primary:active{
+    background-color: var(--raisin-black) !important;
+    border-color: var(--african-violet) !important;
+    color: var(--african-violet) !important;
+    font-weight: bold !important;
 }
 
 /* Disabled Button */
@@ -141,4 +183,22 @@ input::placeholder {
 
 .unliked-heart {
     fill: var(--lavender-web);
+}
+
+/* Title size */
+h1 {
+    font-size: 80px;
+}
+
+/* Flex container */
+.flex-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.margin-for-flex {
+    margin-top: 25px;
+    margin-left: 25px;
 }

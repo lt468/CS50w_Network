@@ -20,8 +20,14 @@ class Like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"{self.user} liked {self.post} at {self.timestamp}"
+
 # Many users can follow many people and many people can have many followers
 class Follow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers")
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.follower} follows {self.following}"

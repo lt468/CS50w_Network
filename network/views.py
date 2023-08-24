@@ -10,6 +10,25 @@ from django.views.decorators.csrf import csrf_protect
 
 from .models import User, Post, Like, Follow
 
+def profile(request, owner_id):
+    owner_name = User.objects.get(pk=owner_id)
+    user_posts = Post.objects.filter(owner=owner_id)
+    
+    # Sort by reverse chronological
+    user_posts = user_posts.order_by('-time')
+
+    # Count the number of followers a user has
+    followers = Follow.objects.filter(following=owner_id).count()
+    following = Follow.objects.filter(follower=owner_id).count()
+
+    return render(request, "network/profile.html", {
+        "owner_id": owner_id,
+        "owner_name": owner_name,
+        "followers": followers,
+        "following": following,
+        "user_posts": user_posts
+        })
+
 @require_POST
 @csrf_protect
 def update_like(request):
@@ -71,6 +90,10 @@ def get_data(request):
     user_id = request.user.id
     # Get the data and check if user has liked that post
     data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
+
+    # Sort by reverse chronological
+    data = data.order_by('-time')
+
     return JsonResponse(list(data.values()), safe=False)
 
 def index(request):
