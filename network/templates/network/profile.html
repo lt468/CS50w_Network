@@ -1,6 +1,7 @@
 {% extends "network/layout.html" %}
 {% block head %}
 <title>the scribbles of {{owner_name}}</title>
+{% csrf_token %}
 {% endblock%}
 
 {% block body %}
@@ -9,7 +10,7 @@
         <h1 class="scrib-font">{{ owner_name }}</h1>
     </div>
     <div class="margin-for-flex">
-        <button id="follow" type="submit" value="follow" class="btn btn-primary scrib-font">follow</button>
+        <button id="{{ owner_id }}" type="submit" value="follow" class="btn btn-primary scrib-font">follow</button>
     </div>
 </div>
 <div class="ms-5 flex-container">

@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // Checking if user has clicked on the DOM
     document.addEventListener('click', event => {
+        console.log(event);
         updateLike(event);
     });
 
