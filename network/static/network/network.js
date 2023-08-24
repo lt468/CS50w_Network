@@ -61,9 +61,11 @@ async function updateFollow(id, btn) {
         if (response.ok) {
             const responseData = await response.json();
             const isNewFollow = responseData['is_new_follow'];
+            const follower_count = responseData['follower_count']
+            const following_count = responseData['following_count']
 
-            // First get the following and then update the following count - should be taken care of when page is refreshed
-            // const followingElement = document.getElementById('following');
+            // First get the following and then update the following count 
+            const followingElement = document.getElementById('following');
 
             // Get the followers
             const followerElement = document.getElementById('followers');
@@ -77,22 +79,11 @@ async function updateFollow(id, btn) {
                 btn.innerHTML = 'follow';
             }
 
-            //if (likeCountElement) {
-            //    const currentLikeCount = parseInt(likeCountElement.textContent);
+            // Change the follower count
 
-            //    if (isNewLike) {
-            //        likeCountElement.textContent = currentLikeCount + 1; 
-            //        heartElement.classList.replace('unliked-heart', 'liked-heart');
-            //    } else {
-            //        if (currentLikeCount > 0) {
-            //            likeCountElement.textContent = currentLikeCount - 1; 
-            //            heartElement.classList.replace('liked-heart', 'unliked-heart');
-            //        }
-            //    }
-            //    console.log('Like updated successfully');
-            //} else {
-        //        console.error('Error updating like count');
-        //    }
+            followerElement.innerHTML = `<strong>followers: ${follower_count} </strong>`;
+            followingElement.innerHTML = `<strong>following: ${following_count} </strong>`;
+        
         } else {
             console.error('Error updating follow value');
         }
