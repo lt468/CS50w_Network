@@ -1,39 +1,154 @@
 // Listen to the page after it is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function () {
     if (window.location.pathname === '/') {
-        // Get the scribble area
-        let scribbleArea = document.querySelector('#new_scribble');
-
-        // Update the character count
-        scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
-
-        // Listen for submit button
-        document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
-            event.preventDefault();
-
-            await postNewScribble();
-        });
-        
-        // Load the posts by default
-        getPosts('all');
+        setupHomePageListeners();
     } else {
-        // Get URL
-        const currentURL = window.location.pathname;
-
-        // Use regex to get integer
-        const user_int = currentURL.match(/\/(\d+)$/);
-        const integerAtEnd = parseInt(user_int[1]);
-
-        getPosts(integerAtEnd);
+        let whoToLoad = checkIfOnProfilePage();
+        let data = await getPosts(whoToLoad);
+        
+        // Adjust buttons based on initial data
+        let currentPageCount = data['current_page_count'];
+        let totalPages = data['total_pages'];
+        adjustPaginationButtons(1, totalPages, currentPageCount);
     }
 
-  
-    // Checking if user has clicked on the DOM
-    document.addEventListener('click', event => {
-        updateLike(event);
-    });
+    // Set initial current-page attributes for pagination links
+    document.getElementById('next-link').setAttribute('data-current-page', 1);
+    document.getElementById('prev-link').setAttribute('data-current-page', 1);
 
+    document.addEventListener('click', handlePageClick);
 });
+
+function setupHomePageListeners() {
+    let scribbleArea = document.querySelector('#new_scribble');
+
+    try {
+        scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
+        document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
+            event.preventDefault();
+            await postNewScribble();
+        });
+    } catch (error) {
+        console.log('No user logged in ' + error);
+    }
+
+    getPosts('all');
+}
+
+async function handlePageClick(event) {
+    if (event.target.classList.contains('follow-btn')) {
+        handleFollowBtnClick(event);
+    } else if (event.target.classList.contains('like-btn')) {
+        updateLike(event);
+    } else if (event.target.classList.contains('page-link')) {
+        await handlePageLinkClick(event);
+    }
+}
+
+function handleFollowBtnClick(event) {
+    const followBtn = event.target;
+    event.preventDefault(); 
+    updateFollow(event.target.getAttribute('id'), followBtn);
+}
+
+// Global variable to keep track of the current page
+let currentPage = 1;
+
+async function handlePageLinkClick(event) {
+    // Get the current page number based on the clicked button (next or prev)
+    let indexPage = (event.target.id === 'next-link' || event.target.closest('.page-link').id === 'next-link') 
+                    ? parseInt(document.getElementById('next-link').getAttribute('data-current-page')) 
+                    : parseInt(document.getElementById('prev-link').getAttribute('data-current-page'));
+
+    event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
+
+    let person = checkIfOnProfilePage();
+    let data = await getPosts(person, indexPage);
+
+    // Update the current page attribute for next time
+    document.getElementById('next-link').setAttribute('data-current-page', indexPage);
+    document.getElementById('prev-link').setAttribute('data-current-page', indexPage);
+
+    let totalPages = data['total_pages'];
+    let currentPageCount = data['current_page_count'];
+
+    adjustPaginationButtons(indexPage, totalPages, currentPageCount);
+}
+
+function adjustPaginationButtons(indexPage, totalPages, currentPageCount) {
+    let nextBtn = document.getElementById('next-page');
+    let prevBtn = document.getElementById('prev-page');
+
+    // prev-btn
+    if (indexPage !== 1) {
+        prevBtn.classList.remove('disabled');
+    } else {
+        if (!prevBtn.classList.contains('disabled')) {
+            prevBtn.classList.add('disabled');
+        }
+    }
+
+    // next-btn
+    if (indexPage !== totalPages && currentPageCount === 10) {
+        nextBtn.classList.remove('disabled');
+    } else {
+        if (!nextBtn.classList.contains('disabled')) {
+            nextBtn.classList.add('disabled');
+        }
+    }
+}
+
+async function updateFollow(id, btn) {
+    // Want to add or remove a follow
+
+    try {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        };
+
+        const response = await fetch('/api/update_follow/', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                id: id
+            })
+        });
+
+        if (response.ok) {
+            const responseData = await response.json();
+            const isNewFollow = responseData['is_new_follow'];
+            const follower_count = responseData['follower_count']
+            const following_count = responseData['following_count']
+
+            // First get the following and then update the following count 
+            const followingElement = document.getElementById('following');
+
+            // Get the followers
+            const followerElement = document.getElementById('followers');
+
+            // First change the follow button if the user is already following the profile
+            if (isNewFollow) {
+                btn.classList.replace('btn-primary', 'btn-outline-primary')
+                btn.innerHTML = 'unfollow';
+            } else {
+                btn.classList.replace('btn-outline-primary', 'btn-primary')
+                btn.innerHTML = 'follow';
+            }
+
+            // Change the follower count
+
+            followerElement.innerHTML = `<strong>followers: ${follower_count} </strong>`;
+            followingElement.innerHTML = `<strong>following: ${following_count} </strong>`;
+        
+        } else {
+            console.error('Error updating follow value');
+        }
+    } catch (error) {
+        console.error('Error updating follow value with error: ', error);
+    }
+}
 
 // Add new scribble
 async function postNewScribble() {
@@ -90,11 +205,16 @@ function changeHeight(area) {
 }
 
 // Get the posts via an API 
-async function getPosts(who) {
+async function getPosts(who, page=1) {
     try {
-        const response = await fetch('/api/data/');
+        let url = `/api/data/?page=${page}`;
+        // Add owner_id parameter to the URL if we're fetching for a specific user
+        if (who !== 'all') {
+            url += `&owner_id=${who}`;
+        }
+        const response = await fetch(url);
         const data = await response.json();
-        const filteredData = filterWho(data, who);
+        const filteredData = filterWho(data.posts, who);
 
         // Clear the existing content, text area, and character count
         document.querySelector('#display_scrib').innerHTML = '';
@@ -110,9 +230,11 @@ async function getPosts(who) {
             const username = await getUserNameAsync(post['owner_id']);
             displayPost(post, username);
         }
+
+        return data;
     } catch (error) {
         console.error('Error fetching or processing data:', error);
-    }
+    } 
 }
 
 // Function to fetch username using async/await
@@ -156,7 +278,7 @@ function displayPost(post, username) {
         <div class="d-flex justify-content-between">
             <span><small class="scrib-font">on ${time}</small></span>
             <span>
-                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger">
+                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
                   <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
                 </svg>
@@ -225,7 +347,11 @@ async function updateLike(event) {
                 console.error('Error updating like value');
             }
         } catch (error) {
-            console.error('Error updating like value: ', error);
+            console.error('Error updating like value, likely user not logged in: ', error);
+            alert('Please log in to like a post')
+            // Redirect to login pag
+            window.location.href = 'http://127.0.0.1:8000/login'
+
         }
     } else {
         console.log('Clicked element is not the like button');
@@ -239,5 +365,19 @@ function filterWho(data, who) {
         return data;
     } else {
         return data.filter(data => data['owner_id'] === who);
+    }
+}
+
+function checkIfOnProfilePage () {
+    if (/^\/profile\/\d+$/.test(window.location.pathname)) {
+        // Get URL
+        const currentURL = window.location.pathname;
+
+        // Use regex to get integer
+        const user_int = currentURL.match(/\/(\d+)$/);
+        const integerAtEnd = parseInt(user_int[1]);
+        return integerAtEnd;
+    } else {
+        return 'all';
     }
 }

@@ -7,8 +7,44 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from django.core.paginator import Paginator
 
 from .models import User, Post, Like, Follow
+
+@require_POST
+@csrf_protect
+def update_follow(request):
+    try:
+        data = json.loads(request.body)
+        following_user_id = data.get('id')
+        follower_user_id = request.user.id
+
+        # Check if there's an existing follow from the user
+        existing_follow = Follow.objects.filter(follower_id=follower_user_id, following_id=following_user_id).first()
+
+        if existing_follow:
+            existing_follow.delete()
+            is_new_follow = False
+        else:
+            Follow.objects.create(follower_id=follower_user_id, following_id=following_user_id)
+            is_new_follow = True
+
+        # Count the number of followers of the profile being viewed
+        follower_count = Follow.objects.filter(following_id=following_user_id).count()
+
+        # Count the number of users the profile being viewed is following
+        following_count = Follow.objects.filter(follower_id=following_user_id).count()
+
+        return JsonResponse({
+            "message": "Following updated successfully", 
+            "follower_count": follower_count,
+            "following_count": following_count,
+            "is_new_follow": is_new_follow
+        })
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def profile(request, owner_id):
     owner_name = User.objects.get(pk=owner_id)
@@ -20,14 +56,24 @@ def profile(request, owner_id):
     # Count the number of followers a user has
     followers = Follow.objects.filter(following=owner_id).count()
     following = Follow.objects.filter(follower=owner_id).count()
+        
+    # Check if there's an existing follow from the user
+    try:
+        follower_user = request.user.id  # User's ID from authentication
+        follower_user_obj = User.objects.get(id=follower_user)
+        existing_follow = Follow.objects.filter(follower=follower_user_obj, following=owner_name).first()
+    except User.DoesNotExist:
+        existing_follow = False
 
     return render(request, "network/profile.html", {
         "owner_id": owner_id,
         "owner_name": owner_name,
         "followers": followers,
         "following": following,
-        "user_posts": user_posts
+        "user_posts": user_posts,
+        "follow_exists": existing_follow
         })
+
 
 @require_POST
 @csrf_protect
@@ -86,15 +132,40 @@ def get_username_by_id(request):
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
 
+
 def get_data(request):
-    user_id = request.user.id
+    posts_per_page = 10 
+    # Get the page parameter, default to 1 if not provided
+    page = request.GET.get('page', 1)  
+
+    # Get the owner_id parameter if it's provided (i.e., when on a profile page)
+    owner_id = request.GET.get('owner_id', None)
+    
+    # Start with all posts and then apply the owner_id filter if provided
+    data = Post.objects.all()
+    if owner_id:
+        data = data.filter(owner_id=owner_id)
+
     # Get the data and check if user has liked that post
-    data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
+    user_id = request.user.id
+    data = data.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
 
     # Sort by reverse chronological
     data = data.order_by('-time')
 
-    return JsonResponse(list(data.values()), safe=False)
+    # Show 10 posts per page
+    paginator = Paginator(data, posts_per_page)  
+    current_page_data = paginator.get_page(page)
+
+    print(len(current_page_data.object_list))
+    # Return posts and the total number of pages
+    response_data = {
+        "posts": list(current_page_data.object_list.values()), 
+        "total_pages": paginator.num_pages,
+        "current_page_count": len(current_page_data.object_list)
+    }
+
+    return JsonResponse(response_data, safe=False)
 
 def index(request):
     return render(request, "network/index.html", {
