@@ -236,8 +236,8 @@ async function getPosts(who, page=1, following=false) {
 
         // Iterate through the data and display posts
         for (const post of filteredData) {
-            const username = await getUserNameAsync(post['owner_id']);
-            displayPost(post, username);
+            console.log(post['time']);  // Log the timestamp
+            displayPost(post, post['username']);
         }
 
         return data;
@@ -275,30 +275,45 @@ function formatTimestamp(timestamp) {
 function displayPost(post, username) {
     const scribble = document.createElement('div');
     scribble.classList.add('m-3', 'p-5', 'scrib-box', 'rounded-3');
-    
+
     const time = formatTimestamp(post['time']);
 
     // Check if the logged-in user has liked the post
     const userLikedPost = post['user_has_liked']; // Replace with the actual data indicating whether the user has liked the post
+    let editButton = '';
+
+    const loggedInUserId = document.getElementById('user-id').getAttribute('data-user-id');
+    if (parseInt(post['owner_id']) === parseInt(loggedInUserId)) {
+        editButton = `<button class="scrib-font btn btn-primary edit-btn" data-post-id="${post['id']}">edit</button>`;
+    }
 
     scribble.innerHTML = `
         <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
-        <p>${post['contents']}</p>
+        <p id="post-content-${post['id']}">${post['contents']}</p>
         <div class="d-flex justify-content-between">
-            <span><small class="scrib-font">on ${time}</small></span>
-            <span>
-                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
-                  <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
-                </svg>
-                </button><span id="like-count-${post['id']}">${post['likes']}</span>
-            </span>
+        <span><small class="scrib-font">on ${time}</small></span>
+        <span>
+        ${editButton}
+        <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi like-btn bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
+        <path class="like-btn" fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+        </svg>
+        </button><span id="like-count-${post['id']}">${post['likes']}</span>
+        </span>
         </div>
-    `;
+        `;
 
     // Add to the DOM
     document.getElementById('display_scrib').append(scribble);
+
+    // Add event listener for the edit button
+    if (editButton) {
+        document.querySelector(`.edit-btn[data-post-id="${post['id']}"]`).addEventListener('click', function() {
+            toggleEditMode(post['id']);
+        });
+    }
 }
+
 
 async function updateLike(event) {
     // Gets the nearest like button on the DOM
@@ -391,3 +406,43 @@ function checkIfOnProfilePage() {
     }
 }
 
+function toggleEditMode(postId) {
+    const postContentElement = document.getElementById(`post-content-${postId}`);
+    const isEditMode = postContentElement.tagName === "TEXTAREA";
+    const editButton = document.querySelector(`.edit-btn[data-post-id="${postId}"]`);
+
+    if (isEditMode) {
+        // Save changes and switch back to read mode
+        savePost(postId, postContentElement.value);
+        postContentElement.outerHTML = `<p id="post-content-${postId}">${postContentElement.value}</p>`;
+        editButton.innerText = "edit";  // set button text to "edit"
+    } else {
+        // Switch to edit mode
+        const currentContent = postContentElement.textContent;
+        postContentElement.outerHTML = `<textarea id="post-content-${postId}" class="form-control mb-2">${currentContent}</textarea>`;
+        editButton.innerText = "save";  // set button text to "save"
+    }
+}
+
+async function savePost(postId, content) {
+    // Get the CSRF token from the CSRF cookie 
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const response = await fetch(`/api/edit_post/${postId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            content: content
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        // Handle any errors that come back from the server
+        console.error(data.error);
+    }
+}
