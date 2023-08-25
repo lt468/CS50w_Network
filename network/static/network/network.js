@@ -175,6 +175,7 @@ async function postNewScribble() {
         if (response.ok) {
             console.log('Scribble posted successfully');
             document.querySelector('#new_scribble').value = ''; // Clear the textarea
+            document.querySelector('#chars').innerHTML = 0; // Clear the textarea
             getPosts('all'); // Call getPosts() only if the post was successfully added
         } else {
             console.error('Error posting scribble');
