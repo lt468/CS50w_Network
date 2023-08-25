@@ -11,13 +11,10 @@
 
 <!-- Displaying all the existing posts from users the logged-in user is following -->
 <div id="display_scrib" class="d-flex flex-column align-items-center justify-content-center">
-    {% if following_posts %}
         <!-- Posts will be displayed here using JavaScript, just like in index.html -->
-    {% else %}
         <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
-            <h2 class="scrib-font">You're not following anyone yet. Start following users to see their posts here!</h2>
+            <h2 class="scrib-font text-center">You're not following anyone yet. Start following users to see their posts here!</h2>
         </div>
-    {% endif %}
 </div>
 <nav aria-label="...">
     <ul class="pagination">

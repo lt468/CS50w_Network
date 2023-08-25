@@ -11,6 +11,9 @@ from django.core.paginator import Paginator
 
 from .models import User, Post, Like, Follow
 
+def following(request):
+    return render(request, "network/following.html")
+
 @require_POST
 @csrf_protect
 def update_follow(request):
@@ -137,13 +140,16 @@ def get_username_by_id(request):
         return JsonResponse({'error': 'User not found'}, status=404)
 
 
-def get_data(request):
+def get_data(request, following=False):
     posts_per_page = 10 
     # Get the page parameter, default to 1 if not provided
     page = request.GET.get('page', 1)  
 
     # Get the owner_id parameter if it's provided (i.e., when on a profile page)
     owner_id = request.GET.get('owner_id', None)
+
+    # Get if need to make sure it's following only
+    following = request.GET.get('following', False)
     
     # Start with all posts and then apply the owner_id filter if provided
     data = Post.objects.all()
@@ -153,6 +159,9 @@ def get_data(request):
     # Get the data and check if user has liked that post
     user_id = request.user.id
     data = data.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
+
+    if following:
+        data = data.filter(owner__in=User.objects.filter(following__follower=request.user))
 
     # Sort by reverse chronological
     data = data.order_by('-time')

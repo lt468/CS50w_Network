@@ -2,10 +2,12 @@
 document.addEventListener('DOMContentLoaded', async function () {
     if (window.location.pathname === '/') {
         setupHomePageListeners();
-    } 
+    }
 
     let whoToLoad = checkIfOnProfilePage();
-    let data = await getPosts(whoToLoad);
+    let followingPage = window.location.pathname === '/following' ? true : false
+
+    let data = await getPosts(whoToLoad, page=1, following=followingPage);
     
     // Adjust buttons based on initial data
     let currentPageCount = data['current_page_count'];
@@ -209,16 +211,19 @@ function changeHeight(area) {
 }
 
 // Get the posts via an API 
-async function getPosts(who, page=1) {
+async function getPosts(who, page=1, following=false) {
     try {
         let url = `/api/data/?page=${page}`;
         // Add owner_id parameter to the URL if we're fetching for a specific user
         if (who !== 'all') {
             url += `&owner_id=${who}`;
+        } else if (following) {
+            url += `&following=${true}`;
         }
+
         const response = await fetch(url);
         const data = await response.json();
-        const filteredData = filterWho(data.posts, who);
+        const filteredData = filterWho(data.posts, who, following);
 
         // Clear the existing content, text area, and character count
         document.querySelector('#display_scrib').innerHTML = '';
@@ -363,16 +368,16 @@ async function updateLike(event) {
 }
 
 // Filter function to display certain (or all posts)
-function filterWho(data, who) {
+function filterWho(data, who, following) {
 
-    if (who === "all") {
+    if (who === "all" || following) {
         return data;
     } else {
         return data.filter(data => data['owner_id'] === who);
     }
 }
 
-function checkIfOnProfilePage () {
+function checkIfOnProfilePage() {
     if (/^\/profile\/\d+$/.test(window.location.pathname)) {
         // Get URL
         const currentURL = window.location.pathname;
@@ -385,3 +390,4 @@ function checkIfOnProfilePage () {
         return 'all';
     }
 }
+
