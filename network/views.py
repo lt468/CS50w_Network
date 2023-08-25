@@ -157,7 +157,6 @@ def get_data(request):
     paginator = Paginator(data, posts_per_page)  
     current_page_data = paginator.get_page(page)
 
-    print(len(current_page_data.object_list))
     # Return posts and the total number of pages
     response_data = {
         "posts": list(current_page_data.object_list.values()), 
