@@ -20,15 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load the posts by default
         getPosts('all');
 
-    } else if (/^\/profile\/\d+$/.test(window.location.pathname)) {
-        // Get URL
-        const currentURL = window.location.pathname;
-
-        // Use regex to get integer
-        const user_int = currentURL.match(/\/(\d+)$/);
-        const integerAtEnd = parseInt(user_int[1]);
-
-        getPosts(integerAtEnd);
+    } else {
+        let whoToLoad = checkIfOnProfilePage();
+        getPosts(whoToLoad);
     }
     
     let indexPage = 1;
@@ -42,16 +36,15 @@ document.addEventListener('DOMContentLoaded', function() {
             updateLike(event);
         } else if (event.target.classList.contains('page-link')) {
             // Which of the two buttons was clicked
-
             event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
 
-            getPosts('all', indexPage)
-                .then((data) => {
-                    totalPages = data['total_pages'];
-                });
+            // Need to see if pagination is for index or profile page
+            let person = checkIfOnProfilePage();
+
+            let data = await getPosts(person, indexPage);
+            let totalPages = data['total_pages'];
 
             // Check if I should disable buttons
-
             let nextBtn = document.getElementById('next-page');
             let prevBtn = document.getElementById('prev-page');
 
@@ -73,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
 });
 
 async function updateFollow(id, btn) {
@@ -338,5 +330,19 @@ function filterWho(data, who) {
         return data;
     } else {
         return data.filter(data => data['owner_id'] === who);
+    }
+}
+
+function checkIfOnProfilePage () {
+    if (/^\/profile\/\d+$/.test(window.location.pathname)) {
+        // Get URL
+        const currentURL = window.location.pathname;
+
+        // Use regex to get integer
+        const user_int = currentURL.match(/\/(\d+)$/);
+        const integerAtEnd = parseInt(user_int[1]);
+        return integerAtEnd;
+    } else {
+        return 'all';
     }
 }
