@@ -236,8 +236,8 @@ async function getPosts(who, page=1, following=false) {
 
         // Iterate through the data and display posts
         for (const post of filteredData) {
-            const username = await getUserNameAsync(post['owner_id']);
-            displayPost(post, username);
+            console.log(post['time']);  // Log the timestamp
+            displayPost(post, post['username']);
         }
 
         return data;
