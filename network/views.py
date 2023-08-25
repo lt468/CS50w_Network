@@ -11,6 +11,28 @@ from django.core.paginator import Paginator
 
 from .models import User, Post, Like, Follow
 
+@require_POST
+@csrf_protect
+def edit_post(request, post_id):
+    try:
+        data = json.loads(request.body)
+        post_content = data.get('content')
+
+        # Fetch the post and check if it belongs to the logged-in user
+        post = Post.objects.get(id=post_id)
+
+        if post.owner != request.user:
+            return JsonResponse({"error": "You do not have permission to edit this post."}, status=403)
+
+        # Update the post content
+        post.contents = post_content
+        post.save()
+
+        return JsonResponse({"message": "Post updated successfully"})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 def following(request):
     return render(request, "network/following.html")
 
