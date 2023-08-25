@@ -1,11 +1,20 @@
 // Listen to the page after it is loaded
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     if (window.location.pathname === '/') {
         setupHomePageListeners();
     } else {
         let whoToLoad = checkIfOnProfilePage();
-        getPosts(whoToLoad);
+        let data = await getPosts(whoToLoad);
+        
+        // Adjust buttons based on initial data
+        let currentPageCount = data['current_page_count'];
+        let totalPages = data['total_pages'];
+        adjustPaginationButtons(1, totalPages, currentPageCount);
     }
+
+    // Set initial current-page attributes for pagination links
+    document.getElementById('next-link').setAttribute('data-current-page', 1);
+    document.getElementById('prev-link').setAttribute('data-current-page', 1);
 
     document.addEventListener('click', handlePageClick);
 });
@@ -46,18 +55,27 @@ function handleFollowBtnClick(event) {
 let currentPage = 1;
 
 async function handlePageLinkClick(event) {
-    // Update the current page based on the clicked link
-    event.target.getAttribute('id') === 'next-link' ? currentPage++ : currentPage--;
+    // Get the current page number based on the clicked button (next or prev)
+    let indexPage = (event.target.id === 'next-link' || event.target.closest('.page-link').id === 'next-link') 
+                    ? parseInt(document.getElementById('next-link').getAttribute('data-current-page')) 
+                    : parseInt(document.getElementById('prev-link').getAttribute('data-current-page'));
+
+    event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
 
     let person = checkIfOnProfilePage();
+    let data = await getPosts(person, indexPage);
 
-    let data = await getPosts(person, currentPage);
+    // Update the current page attribute for next time
+    document.getElementById('next-link').setAttribute('data-current-page', indexPage);
+    document.getElementById('prev-link').setAttribute('data-current-page', indexPage);
+
     let totalPages = data['total_pages'];
+    let currentPageCount = data['current_page_count'];
 
-    adjustPaginationButtons(currentPage, totalPages);
+    adjustPaginationButtons(indexPage, totalPages, currentPageCount);
 }
 
-function adjustPaginationButtons(indexPage, totalPages) {
+function adjustPaginationButtons(indexPage, totalPages, currentPageCount) {
     let nextBtn = document.getElementById('next-page');
     let prevBtn = document.getElementById('prev-page');
 
@@ -71,7 +89,7 @@ function adjustPaginationButtons(indexPage, totalPages) {
     }
 
     // next-btn
-    if (indexPage !== totalPages) {
+    if (indexPage !== totalPages && currentPageCount === 10) {
         nextBtn.classList.remove('disabled');
     } else {
         if (!nextBtn.classList.contains('disabled')) {
@@ -79,6 +97,7 @@ function adjustPaginationButtons(indexPage, totalPages) {
         }
     }
 }
+
 async function updateFollow(id, btn) {
     // Want to add or remove a follow
 
@@ -188,7 +207,12 @@ function changeHeight(area) {
 // Get the posts via an API 
 async function getPosts(who, page=1) {
     try {
-        const response = await fetch(`/api/data/?page=${page}`);
+        let url = `/api/data/?page=${page}`;
+        // Add owner_id parameter to the URL if we're fetching for a specific user
+        if (who !== 'all') {
+            url += `&owner_id=${who}`;
+        }
+        const response = await fetch(url);
         const data = await response.json();
         const filteredData = filterWho(data.posts, who);
 

@@ -138,10 +138,18 @@ def get_data(request):
     # Get the page parameter, default to 1 if not provided
     page = request.GET.get('page', 1)  
 
+    # Get the owner_id parameter if it's provided (i.e., when on a profile page)
+    owner_id = request.GET.get('owner_id', None)
+    
+    # Start with all posts and then apply the owner_id filter if provided
+    data = Post.objects.all()
+    if owner_id:
+        data = data.filter(owner_id=owner_id)
+
     # Get the data and check if user has liked that post
     user_id = request.user.id
+    data = data.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
 
-    data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
     # Sort by reverse chronological
     data = data.order_by('-time')
 
@@ -149,6 +157,7 @@ def get_data(request):
     paginator = Paginator(data, posts_per_page)  
     current_page_data = paginator.get_page(page)
 
+    print(len(current_page_data.object_list))
     # Return posts and the total number of pages
     response_data = {
         "posts": list(current_page_data.object_list.values()), 
