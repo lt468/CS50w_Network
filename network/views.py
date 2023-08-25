@@ -134,6 +134,7 @@ def get_username_by_id(request):
 
 
 def get_data(request):
+    posts_per_page = 10 
     # Get the page parameter, default to 1 if not provided
     page = request.GET.get('page', 1)  
 
@@ -145,10 +146,16 @@ def get_data(request):
     data = data.order_by('-time')
 
     # Show 10 posts per page
-    paginator = Paginator(data, 10)  
+    paginator = Paginator(data, posts_per_page)  
     current_page_data = paginator.get_page(page)
 
-    return JsonResponse(list(current_page_data.object_list.values()), safe=False)
+    # Return posts and the total number of pages
+    response_data = {
+        "posts": list(current_page_data.object_list.values()), 
+        "total_pages": paginator.num_pages
+    }
+
+    return JsonResponse(response_data, safe=False)
 
 def index(request):
     return render(request, "network/index.html", {

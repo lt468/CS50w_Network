@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await postNewScribble();
             });
         } catch (error) {
+            console.log('No user logged in ' + error);
         }
 
         
@@ -148,11 +149,11 @@ function changeHeight(area) {
 }
 
 // Get the posts via an API 
-async function getPosts(who) {
+async function getPosts(who, page=1) {
     try {
-        const response = await fetch('/api/data/');
+        const response = await fetch(`/api/data/?page=${page}`);
         const data = await response.json();
-        const filteredData = filterWho(data, who);
+        const filteredData = filterWho(data.posts, who);
 
         // Clear the existing content, text area, and character count
         document.querySelector('#display_scrib').innerHTML = '';
