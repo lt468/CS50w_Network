@@ -2,6 +2,9 @@
 
 {% block body %}
 <div id="user-id" data-user-id="{{ user.id }}" style="display: none;"></div>
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
 
 <!-- Display title "Following" instead of the New Scribble box -->
 <div class="d-flex justify-content-center">
@@ -12,11 +15,14 @@
 
 <!-- Displaying all the existing posts from users the logged-in user is following -->
 <div id="display_scrib" class="d-flex flex-column align-items-center justify-content-center">
-        <!-- Posts will be displayed here using JavaScript, just like in index.html -->
-        <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
-            <h2 class="scrib-font">log in to follow scribblers</h2>
-            <p><a class="nav-link" href="{% url 'login' %}"> Log In here.</a></p>
-        </div>
+    {% if user.is_authenticated %}
+    <!-- Placeholder for posts will be populated via JavaScript -->
+    {% else %}
+    <div class="m-3 p-5 scrib-box rounded-3 d-flex flex-column align-items-center">
+        <h2 class="scrib-font">log in to follow scribblers</h2>
+        <p><a class="nav-link" href="{% url 'login' %}"> Log In here.</a></p>
+    </div>
+    {% endif %}
 </div>
 <nav aria-label="...">
     <ul class="pagination">
