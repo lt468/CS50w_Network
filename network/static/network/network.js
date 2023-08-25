@@ -1,73 +1,84 @@
 // Listen to the page after it is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     if (window.location.pathname === '/') {
-        // Get the scribble area
-        let scribbleArea = document.querySelector('#new_scribble');
-
-        try {
-            // Update the character count
-            scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
-            // Listen for submit button
-            document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
-                event.preventDefault();
-
-                await postNewScribble();
-            });
-        } catch (error) {
-            console.log('No user logged in ' + error);
-        }
-
-        // Load the posts by default
-        getPosts('all');
-
+        setupHomePageListeners();
     } else {
         let whoToLoad = checkIfOnProfilePage();
         getPosts(whoToLoad);
     }
-    
-    let indexPage = 1;
-    // Checking if user has clicked on the DOM
-    document.addEventListener('click', event => {
-        if (event.target.classList.contains('follow-btn')) {
-            const followBtn = event.target;
-            event.preventDefault(); // Stops the refresh of the page
-            updateFollow(event.target.getAttribute('id'), followBtn)
-        } else if (event.target.classList.contains('like-btn')) {
-            updateLike(event);
-        } else if (event.target.classList.contains('page-link')) {
-            // Which of the two buttons was clicked
-            event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
 
-            // Need to see if pagination is for index or profile page
-            let person = checkIfOnProfilePage();
-
-            let data = await getPosts(person, indexPage);
-            let totalPages = data['total_pages'];
-
-            // Check if I should disable buttons
-            let nextBtn = document.getElementById('next-page');
-            let prevBtn = document.getElementById('prev-page');
-
-            // prev-btn
-            if (indexPage !== 1) {
-                prevBtn.classList.remove('disabled');
-            } else {
-                if (! prevBtn.classList.contains('disabled')){
-                    prevBtn.classList.add('disabled');
-                }
-            }
-            // next-btn
-            if (indexPage !== totalPages) {
-                nextBtn.classList.remove('disabled');
-            } else {
-                if (! nextBtn.classList.contains('disabled')){
-                    nextBtn.classList.add('disabled');
-                }
-            }
-        }
-    });
+    document.addEventListener('click', handlePageClick);
 });
 
+function setupHomePageListeners() {
+    let scribbleArea = document.querySelector('#new_scribble');
+
+    try {
+        scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
+        document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
+            event.preventDefault();
+            await postNewScribble();
+        });
+    } catch (error) {
+        console.log('No user logged in ' + error);
+    }
+
+    getPosts('all');
+}
+
+async function handlePageClick(event) {
+    if (event.target.classList.contains('follow-btn')) {
+        handleFollowBtnClick(event);
+    } else if (event.target.classList.contains('like-btn')) {
+        updateLike(event);
+    } else if (event.target.classList.contains('page-link')) {
+        await handlePageLinkClick(event);
+    }
+}
+
+function handleFollowBtnClick(event) {
+    const followBtn = event.target;
+    event.preventDefault(); 
+    updateFollow(event.target.getAttribute('id'), followBtn);
+}
+
+// Global variable to keep track of the current page
+let currentPage = 1;
+
+async function handlePageLinkClick(event) {
+    // Update the current page based on the clicked link
+    event.target.getAttribute('id') === 'next-link' ? currentPage++ : currentPage--;
+
+    let person = checkIfOnProfilePage();
+
+    let data = await getPosts(person, currentPage);
+    let totalPages = data['total_pages'];
+
+    adjustPaginationButtons(currentPage, totalPages);
+}
+
+function adjustPaginationButtons(indexPage, totalPages) {
+    let nextBtn = document.getElementById('next-page');
+    let prevBtn = document.getElementById('prev-page');
+
+    // prev-btn
+    if (indexPage !== 1) {
+        prevBtn.classList.remove('disabled');
+    } else {
+        if (!prevBtn.classList.contains('disabled')) {
+            prevBtn.classList.add('disabled');
+        }
+    }
+
+    // next-btn
+    if (indexPage !== totalPages) {
+        nextBtn.classList.remove('disabled');
+    } else {
+        if (!nextBtn.classList.contains('disabled')) {
+            nextBtn.classList.add('disabled');
+        }
+    }
+}
 async function updateFollow(id, btn) {
     // Want to add or remove a follow
 
