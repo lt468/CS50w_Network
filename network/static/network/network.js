@@ -1,93 +1,85 @@
-// Add event listener to handle DOMContentLoaded event. This ensures that our code only runs after the entire HTML document has been fully loaded.
-document.addEventListener('DOMContentLoaded', function () {
-    // Check the pathname to determine if we're on the home page.
+// Listen to the page after it is loaded
+document.addEventListener('DOMContentLoaded', async function () {
     if (window.location.pathname === '/') {
-        // If on the home page, set up event listeners specific to this page.
         setupHomePageListeners();
-    } else {
-        // If not on the home page, we might be on a profile page.
-        // Check if we're on a profile page and get the respective user's posts.
-        let whoToLoad = checkIfOnProfilePage();
-        getPosts(whoToLoad);
-    }
+    } 
 
-    // Add a global click event listener to handle various click events across the page.
+    let whoToLoad = checkIfOnProfilePage();
+    let data = await getPosts(whoToLoad);
+    
+    // Adjust buttons based on initial data
+    let currentPageCount = data['current_page_count'];
+    let totalPages = data['total_pages'];
+    adjustPaginationButtons(1, totalPages, currentPageCount);
+
+    // Set initial current-page attributes for pagination links
+    document.getElementById('next-link').setAttribute('data-current-page', 1);
+    document.getElementById('prev-link').setAttribute('data-current-page', 1);
+
     document.addEventListener('click', handlePageClick);
 });
 
-// This function sets up specific event listeners for the home page.
 function setupHomePageListeners() {
-    // Get the text area where users can write new posts (scribbles).
     let scribbleArea = document.querySelector('#new_scribble');
 
     try {
-        // Add an event listener to update the character count as the user types.
         scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
-        
-        // Add an event listener to handle the submission of a new post.
         document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
             event.preventDefault();
             await postNewScribble();
         });
     } catch (error) {
-        // If there's any error (e.g., if no user is logged in and thus the textarea doesn't exist), log the error.
         console.log('No user logged in ' + error);
     }
 
-    // Load all posts for the home page.
     getPosts('all');
 }
 
-// This function handles the global click events on the page. Based on what was clicked, different functions are executed.
 async function handlePageClick(event) {
-    // Check if a follow button was clicked.
     if (event.target.classList.contains('follow-btn')) {
         handleFollowBtnClick(event);
-    } 
-    // Check if a like button was clicked.
-    else if (event.target.classList.contains('like-btn')) {
+    } else if (event.target.classList.contains('like-btn')) {
         updateLike(event);
-    } 
-    // Check if a pagination link (next or previous) was clicked.
-    else if (event.target.classList.contains('page-link')) {
+    } else if (event.target.classList.contains('page-link')) {
         await handlePageLinkClick(event);
     }
 }
 
-// This function handles the click event when the "Follow" or "Unfollow" button is clicked. It makes an API request to update the follow status for the respective user.
 function handleFollowBtnClick(event) {
-    // Get the button that was clicked.
     const followBtn = event.target;
-    // Prevent the default action (useful if the button is part of a form).
     event.preventDefault(); 
-    // Update the follow status based on the clicked button's ID.
     updateFollow(event.target.getAttribute('id'), followBtn);
 }
 
-// This function handles the click event of pagination links. It fetches the appropriate page of posts based on the clicked link (next or previous).
-async function handlePageLinkClick(event) {
-    // Determine the current page based on the clicked link's data attribute.
-    let indexPage = parseInt(event.target.getAttribute('data-current-page') || "1");
-    // Increment or decrement the page number based on whether "Next" or "Previous" was clicked.
-    event.target.id === 'next-link' ? indexPage++ : indexPage--;
+// Global variable to keep track of the current page
+let currentPage = 1;
 
-    // Determine if we're on a profile page and fetch posts for the respective user.
+async function handlePageLinkClick(event) {
+    // Get the current page number based on the clicked button (next or prev)
+    let indexPage = (event.target.id === 'next-link' || event.target.closest('.page-link').id === 'next-link') 
+                    ? parseInt(document.getElementById('next-link').getAttribute('data-current-page')) 
+                    : parseInt(document.getElementById('prev-link').getAttribute('data-current-page'));
+
+    event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
+
     let person = checkIfOnProfilePage();
     let data = await getPosts(person, indexPage);
+
+    // Update the current page attribute for next time
+    document.getElementById('next-link').setAttribute('data-current-page', indexPage);
+    document.getElementById('prev-link').setAttribute('data-current-page', indexPage);
+
     let totalPages = data['total_pages'];
     let currentPageCount = data['current_page_count'];
 
-    // Adjust the visibility and state of the pagination buttons based on the current page and total pages.
     adjustPaginationButtons(indexPage, totalPages, currentPageCount);
 }
 
-// This function adjusts the visibility and state of the pagination buttons. The Next button is disabled on the last page, and the Previous button is disabled on the first page.
 function adjustPaginationButtons(indexPage, totalPages, currentPageCount) {
-    // Get the Next and Previous buttons.
     let nextBtn = document.getElementById('next-page');
     let prevBtn = document.getElementById('prev-page');
 
-    // Logic to enable/disable the Previous button.
+    // prev-btn
     if (indexPage !== 1) {
         prevBtn.classList.remove('disabled');
     } else {
@@ -96,7 +88,7 @@ function adjustPaginationButtons(indexPage, totalPages, currentPageCount) {
         }
     }
 
-    // Logic to enable/disable the Next button.
+    // next-btn
     if (indexPage !== totalPages && currentPageCount === 10) {
         nextBtn.classList.remove('disabled');
     } else {
@@ -127,8 +119,8 @@ async function updateFollow(id, btn) {
         if (response.ok) {
             const responseData = await response.json();
             const isNewFollow = responseData['is_new_follow'];
-            const follower_count = responseData['follower_count']
-            const following_count = responseData['following_count']
+            const follower_count = responseData['follower_count'];
+            const following_count = responseData['following_count'];
 
             // First get the following and then update the following count 
             const followingElement = document.getElementById('following');
@@ -138,20 +130,23 @@ async function updateFollow(id, btn) {
 
             // First change the follow button if the user is already following the profile
             if (isNewFollow) {
-                btn.classList.replace('btn-primary', 'btn-outline-primary')
+                btn.classList.replace('btn-primary', 'btn-outline-primary');
                 btn.innerHTML = 'unfollow';
             } else {
-                btn.classList.replace('btn-outline-primary', 'btn-primary')
+                btn.classList.replace('btn-outline-primary', 'btn-primary');
                 btn.innerHTML = 'follow';
             }
 
             // Change the follower count
-
             followerElement.innerHTML = `<strong>followers: ${follower_count} </strong>`;
             followingElement.innerHTML = `<strong>following: ${following_count} </strong>`;
-        
         } else {
-            console.error('Error updating follow value');
+            const responseData = await response.json();
+            if (responseData['error']) {
+                alert(responseData['error']);
+            } else {
+                console.error('Error updating follow value');
+            }
         }
     } catch (error) {
         console.error('Error updating follow value with error: ', error);
@@ -177,6 +172,7 @@ async function postNewScribble() {
 
         if (response.ok) {
             console.log('Scribble posted successfully');
+            document.querySelector('#new_scribble').value = ''; // Clear the textarea
             getPosts('all'); // Call getPosts() only if the post was successfully added
         } else {
             console.error('Error posting scribble');

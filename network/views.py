@@ -19,6 +19,10 @@ def update_follow(request):
         following_user_id = data.get('id')
         follower_user_id = request.user.id
 
+        # Make sure can't follow yourself
+        if int(following_user_id) == int(follower_user_id):
+            return JsonResponse({'error': 'You cannot follow yourself!'}, status=400)
+
         # Check if there's an existing follow from the user
         existing_follow = Follow.objects.filter(follower_id=follower_user_id, following_id=following_user_id).first()
 

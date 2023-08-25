@@ -37,6 +37,7 @@
         </div>
     {% endif %}
 </div>
+{% if user.is_authenticated %}
 <nav aria-label="...">
     <ul class="pagination">
         <li class="page-item disabled" id="prev-page">
@@ -47,6 +48,6 @@
         </li>
     </ul>
 </nav>
-
+{% endif %}
 
 {% endblock %}

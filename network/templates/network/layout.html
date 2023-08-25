@@ -25,7 +25,7 @@
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><strong>{{ user.username }}</strong></a>
+                        <a class="nav-link" href="{% url 'profile' user.id %}"><strong>{{ user.username }}</strong></a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'index' %}">All Posts</a>
