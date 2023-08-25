@@ -9,12 +9,14 @@
         <h1 class="scrib-font">{{ owner_name }}</h1>
     </div>
     <div class="margin-for-flex">
+        {% if user.is_authenticated %}
         <form method="post" action="#">
             {% csrf_token %} 
             <button id="{{ owner_id }}" type="submit" value="follow" class="btn scrib-font follow-btn {% if follow_exists %}btn-outline-primary{% else %}btn-primary{% endif %}">
                 {% if follow_exists %}unfollow{% else %}follow{% endif %}
             </button>
         </form>
+        {% endif %}
     </div>
 </div>
 <div class="ms-5 flex-container">

@@ -4,19 +4,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get the scribble area
         let scribbleArea = document.querySelector('#new_scribble');
 
-        // Update the character count
-        scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
+        try {
+            // Update the character count
+            scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
+            // Listen for submit button
+            document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
+                event.preventDefault();
 
-        // Listen for submit button
-        document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
-            event.preventDefault();
+                await postNewScribble();
+            });
+        } catch (error) {
+        }
 
-            await postNewScribble();
-        });
         
         // Load the posts by default
         getPosts('all');
-    } else {
+    } else if (/^\/profile\/\d+$/.test(window.location.pathname)) {
         // Get URL
         const currentURL = window.location.pathname;
 
@@ -26,8 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         getPosts(integerAtEnd);
     }
-
-  
     // Checking if user has clicked on the DOM
     document.addEventListener('click', event => {
         if (event.target.classList.contains('follow-btn')) {
@@ -282,7 +283,11 @@ async function updateLike(event) {
                 console.error('Error updating like value');
             }
         } catch (error) {
-            console.error('Error updating like value: ', error);
+            console.error('Error updating like value, likely user not logged in: ', error);
+            alert('Please log in to like a post')
+            // Redirect to login pag
+            window.location.href = 'http://127.0.0.1:8000/login'
+
         }
     } else {
         console.log('Clicked element is not the like button');

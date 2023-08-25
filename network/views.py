@@ -7,9 +7,12 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from django.core.paginator import Paginator
 
 from .models import User, Post, Like, Follow
 
+@require_POST
+@csrf_protect
 def update_follow(request):
     try:
         data = json.loads(request.body)
@@ -55,9 +58,12 @@ def profile(request, owner_id):
     following = Follow.objects.filter(follower=owner_id).count()
         
     # Check if there's an existing follow from the user
-    follower_user = request.user.id  # User's ID from authentication
-    follower_user_obj = User.objects.get(id=follower_user)
-    existing_follow = Follow.objects.filter(follower=follower_user_obj, following=owner_name).first()
+    try:
+        follower_user = request.user.id  # User's ID from authentication
+        follower_user_obj = User.objects.get(id=follower_user)
+        existing_follow = Follow.objects.filter(follower=follower_user_obj, following=owner_name).first()
+    except User.DoesNotExist:
+        existing_follow = False
 
     return render(request, "network/profile.html", {
         "owner_id": owner_id,
@@ -67,6 +73,7 @@ def profile(request, owner_id):
         "user_posts": user_posts,
         "follow_exists": existing_follow
         })
+
 
 @require_POST
 @csrf_protect
@@ -125,15 +132,23 @@ def get_username_by_id(request):
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
 
-def get_data(request):
-    user_id = request.user.id
-    # Get the data and check if user has liked that post
-    data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
 
+def get_data(request):
+    # Get the page parameter, default to 1 if not provided
+    page = request.GET.get('page', 1)  
+
+    # Get the data and check if user has liked that post
+    user_id = request.user.id
+
+    data = Post.objects.annotate(user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=user_id)))
     # Sort by reverse chronological
     data = data.order_by('-time')
 
-    return JsonResponse(list(data.values()), safe=False)
+    # Show 10 posts per page
+    paginator = Paginator(data, 10)  
+    current_page_data = paginator.get_page(page)
+
+    return JsonResponse(list(current_page_data.object_list.values()), safe=False)
 
 def index(request):
     return render(request, "network/index.html", {
