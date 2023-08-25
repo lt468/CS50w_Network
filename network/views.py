@@ -152,7 +152,8 @@ def get_data(request):
     # Return posts and the total number of pages
     response_data = {
         "posts": list(current_page_data.object_list.values()), 
-        "total_pages": paginator.num_pages
+        "total_pages": paginator.num_pages,
+        "current_page_count": len(current_page_data.object_list)
     }
 
     return JsonResponse(response_data, safe=False)
