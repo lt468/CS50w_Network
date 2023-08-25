@@ -209,13 +209,13 @@ h1 {
 .pagination {
     display: flex;
     justify-content: center;
-    padding-left: 0; /* Remove the default padding of unordered list */
+    padding-left: 0; 
     list-style: none;
     border-radius: 0.25rem;
 }
 
 .page-item {
-    margin: 0 2px; /* Some margin between each page item for spacing */
+    margin: 0 2px; 
 }
 
 .page-link {

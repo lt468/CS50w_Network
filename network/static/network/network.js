@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('No user logged in ' + error);
         }
 
-        
         // Load the posts by default
         getPosts('all');
+
     } else if (/^\/profile\/\d+$/.test(window.location.pathname)) {
         // Get URL
         const currentURL = window.location.pathname;
@@ -30,14 +30,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
         getPosts(integerAtEnd);
     }
+    
+    let indexPage = 1;
     // Checking if user has clicked on the DOM
     document.addEventListener('click', event => {
         if (event.target.classList.contains('follow-btn')) {
             const followBtn = event.target;
             event.preventDefault(); // Stops the refresh of the page
             updateFollow(event.target.getAttribute('id'), followBtn)
+        } else if (event.target.classList.contains('like-btn')) {
+            updateLike(event);
+        } else if (event.target.classList.contains('page-link')) {
+            // Which of the two buttons was clicked
+
+            event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
+
+            getPosts('all', indexPage)
+                .then((data) => {
+                    totalPages = data['total_pages'];
+                });
+
+            // Check if I should disable buttons
+
+            let nextBtn = document.getElementById('next-page');
+            let prevBtn = document.getElementById('prev-page');
+
+            // prev-btn
+            if (indexPage !== 1) {
+                prevBtn.classList.remove('disabled');
+            } else {
+                if (! prevBtn.classList.contains('disabled')){
+                    prevBtn.classList.add('disabled');
+                }
+            }
+            // next-btn
+            if (indexPage !== totalPages) {
+                nextBtn.classList.remove('disabled');
+            } else {
+                if (! nextBtn.classList.contains('disabled')){
+                    nextBtn.classList.add('disabled');
+                }
+            }
         }
-        updateLike(event);
     });
 
 });
@@ -169,9 +203,11 @@ async function getPosts(who, page=1) {
             const username = await getUserNameAsync(post['owner_id']);
             displayPost(post, username);
         }
+
+        return data;
     } catch (error) {
         console.error('Error fetching or processing data:', error);
-    }
+    } 
 }
 
 // Function to fetch username using async/await
@@ -215,7 +251,7 @@ function displayPost(post, username) {
         <div class="d-flex justify-content-between">
             <span><small class="scrib-font">on ${time}</small></span>
             <span>
-                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger">
+                <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
                   <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
                 </svg>
