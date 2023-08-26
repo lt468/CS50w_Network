@@ -48,6 +48,11 @@
         </li>
     </ul>
 </nav>
+{% else %}
+        <div class="d-flex justify-content-center flex-column align-items-center">
+            <h2 class="mt-2 scrib-font">log in to see more scribbles...</h2>
+            <p><a class="nav-link" href="{% url 'login' %}"> Log In here.</a></p>
+        </div>
 {% endif %}
 
 {% endblock %}
