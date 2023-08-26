@@ -4,7 +4,7 @@
 
 This is my submission to CS50w's Project 4: Network. 
 
-<!-- [![Project Demo Video](https://img.youtube.com/vi/G9PqV6hWosw/0.jpg)](https://youtu.be/G9PqV6hWosw) -->
+[![Project Demo Video](https://img.youtube.com/vi/kwpiiyLoT5o/0.jpg)](https://youtu.be/kwpiiyLoT5o)
 
 For information about the course, check out the [official course page](https://cs50.harvard.edu/web/2020/).
 
