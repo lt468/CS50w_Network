@@ -411,16 +411,49 @@ function toggleEditMode(postId) {
     const postContentElement = document.getElementById(`post-content-${postId}`);
     const isEditMode = postContentElement.tagName === "TEXTAREA";
     const editButton = document.querySelector(`.edit-btn[data-post-id="${postId}"]`);
+    let charCountElement;
 
     if (isEditMode) {
         // Save changes and switch back to read mode
         savePost(postId, postContentElement.value);
         postContentElement.outerHTML = `<p id="post-content-${postId}">${postContentElement.value}</p>`;
         editButton.innerText = "edit";  // set button text to "edit"
+        
+        // Remove character count element if it exists
+        charCountElement = document.getElementById(`char-count-${postId}`);
+        if (charCountElement) {
+            charCountElement.remove();
+        }
     } else {
         // Switch to edit mode
         const currentContent = postContentElement.textContent;
         postContentElement.outerHTML = `<textarea id="post-content-${postId}" class="form-control mb-2">${currentContent}</textarea>`;
+        
+        // Add character count element next to the save button
+        charCountElement = document.createElement("span");
+        charCountElement.classList.add("ms-2", "me-2")
+        charCountElement.setAttribute("id", `char-count-${postId}`);
+        charCountElement.textContent = currentContent.length;
+        editButton.after(charCountElement);
+
+        // Add event listener to textarea
+        document.getElementById(`post-content-${postId}`).addEventListener("input", function(event) {
+            const textLength = event.target.value.length;
+            charCountElement.textContent = textLength;
+            
+            if (textLength >= 260 && textLength <= 280) {
+                charCountElement.style.color = 'yellow';
+                editButton.disabled = false;
+            } else if (textLength > 280) {
+                charCountElement.style.color = 'red';
+                editButton.disabled = true; 
+            } else {
+                charCountElement.style.color = 'var(--lavender-web)';
+                editButton.disabled = false;
+            }
+
+        });
+
         editButton.innerText = "save";  // set button text to "save"
     }
 }
