@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 function setupHomePageListeners() {
     let scribbleArea = document.querySelector('#new_scribble');
 
+    // Clear the textarea upon refresh of the home page
+    scribbleArea.value = '';
+
     try {
         scribbleArea.addEventListener('input', () => updateCharacterCount(scribbleArea.value.length, scribbleArea));
         document.querySelector('#submit_new_scrib').addEventListener('submit', async event => {
@@ -288,9 +291,10 @@ function displayPost(post, username) {
         editButton = `<button class="scrib-font btn btn-primary edit-btn" data-post-id="${post['id']}">edit</button>`;
     }
 
+    // Create a defined width for the scribble paragraph
     scribble.innerHTML = `
         <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
-        <p id="post-content-${post['id']}">${post['contents']}</p>
+        <p class="scribble-para" id="post-content-${post['id']}">${post['contents']}</p>
         <div class="d-flex justify-content-between">
         <span><small class="scrib-font">on ${time}</small></span>
         <span>

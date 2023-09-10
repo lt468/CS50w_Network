@@ -161,6 +161,11 @@ body {
     overflow: hidden;
 }
 
+/* TODO - Create a defined width for the scribble paragraph 
+.scribble-para {
+}
+*/
+
 /* Input colour */
 input::placeholder {
     color: var(--lavender-web);
