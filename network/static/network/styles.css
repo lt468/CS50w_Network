@@ -134,6 +134,9 @@ body {
 
 /* New scribble box */
 .scrib-box {
+    overflow: auto;
+    word-break: break-word;
+    overflow-wrap: break-word;
     background-color: var(--davys-gray);
     border: 3px solid var(--rose-quartz);
     width: 75%;

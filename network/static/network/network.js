@@ -1,5 +1,5 @@
 // Listen to the page after it is loaded
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async function() {
     if (window.location.pathname === '/') {
         setupHomePageListeners();
     }
@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     let whoToLoad = checkIfOnProfilePage();
     let followingPage = window.location.pathname === '/following' ? true : false
 
-    let data = await getPosts(whoToLoad, page=1, following=followingPage);
-    
+    let data = await getPosts(whoToLoad, page = 1, following = followingPage);
+
     // Adjust buttons based on initial data
     let currentPageCount = data['current_page_count'];
     let totalPages = data['total_pages'];
@@ -52,7 +52,7 @@ async function handlePageClick(event) {
 
 function handleFollowBtnClick(event) {
     const followBtn = event.target;
-    event.preventDefault(); 
+    event.preventDefault();
     updateFollow(event.target.getAttribute('id'), followBtn);
 }
 
@@ -61,9 +61,9 @@ let currentPage = 1;
 
 async function handlePageLinkClick(event) {
     // Get the current page number based on the clicked button (next or prev)
-    let indexPage = (event.target.id === 'next-link' || event.target.closest('.page-link').id === 'next-link') 
-                    ? parseInt(document.getElementById('next-link').getAttribute('data-current-page')) 
-                    : parseInt(document.getElementById('prev-link').getAttribute('data-current-page'));
+    let indexPage = (event.target.id === 'next-link' || event.target.closest('.page-link').id === 'next-link')
+        ? parseInt(document.getElementById('next-link').getAttribute('data-current-page'))
+        : parseInt(document.getElementById('prev-link').getAttribute('data-current-page'));
 
     event.target.getAttribute('id') === 'next-link' ? indexPage++ : indexPage--;
 
@@ -215,7 +215,7 @@ function changeHeight(area) {
 }
 
 // Get the posts via an API 
-async function getPosts(who, page=1, following=false) {
+async function getPosts(who, page = 1, following = false) {
     try {
         let url = `/api/data/?page=${page}`;
         // Add owner_id parameter to the URL if we're fetching for a specific user
@@ -236,7 +236,7 @@ async function getPosts(who, page=1, following=false) {
         if (!new_srib_el === null) {
             new_srib_el.value = '';
             chers_el.innerHTML = 0;
-        } 
+        }
 
         // Iterate through the data and display posts
         for (const post of filteredData) {
@@ -247,7 +247,7 @@ async function getPosts(who, page=1, following=false) {
         return data;
     } catch (error) {
         console.error('Error fetching or processing data:', error);
-    } 
+    }
 }
 
 // Function to fetch username using async/await
@@ -265,7 +265,7 @@ async function getUserNameAsync(ownerId) {
 // Formatting the time
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp); // Parse the timestamp into a Date object
-    
+
     const hour = ('0' + date.getHours()).slice(-2);
     const minute = ('0' + date.getMinutes()).slice(-2);
     const day = ('0' + date.getDate()).slice(-2);
@@ -291,7 +291,6 @@ function displayPost(post, username) {
         editButton = `<button class="scrib-font btn btn-primary edit-btn" data-post-id="${post['id']}">edit</button>`;
     }
 
-    // Create a defined width for the scribble paragraph
     scribble.innerHTML = `
         <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
         <p class="scribble-para" id="post-content-${post['id']}">${post['contents']}</p>
@@ -323,11 +322,11 @@ function displayPost(post, username) {
 async function updateLike(event) {
     // Gets the nearest like button on the DOM
     let element = event.target.closest('.btn-outline-danger');
-    
+
     // Check if the clicked element is the like button
     if (element && element.getAttribute('id')) {
         console.log('Like button clicked');
-        
+
         // Try to update like
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -350,7 +349,7 @@ async function updateLike(event) {
                 const isNewLike = responseData.is_new_like;
 
                 const likeCountElement = document.getElementById(`like-count-${element.getAttribute('id')}`);
-                
+
                 // Get the correct heart
                 const heartElement = document.getElementById(`heart_${element.getAttribute('id')}`);
 
@@ -422,7 +421,7 @@ function toggleEditMode(postId) {
         savePost(postId, postContentElement.value);
         postContentElement.outerHTML = `<p id="post-content-${postId}">${postContentElement.value}</p>`;
         editButton.innerText = "edit";  // set button text to "edit"
-        
+
         // Remove character count element if it exists
         charCountElement = document.getElementById(`char-count-${postId}`);
         if (charCountElement) {
@@ -432,7 +431,7 @@ function toggleEditMode(postId) {
         // Switch to edit mode
         const currentContent = postContentElement.textContent;
         postContentElement.outerHTML = `<textarea id="post-content-${postId}" class="form-control mb-2">${currentContent}</textarea>`;
-        
+
         // Add character count element next to the save button
         charCountElement = document.createElement("span");
         charCountElement.classList.add("ms-2", "me-2")
@@ -444,13 +443,13 @@ function toggleEditMode(postId) {
         document.getElementById(`post-content-${postId}`).addEventListener("input", function(event) {
             const textLength = event.target.value.length;
             charCountElement.textContent = textLength;
-            
+
             if (textLength >= 260 && textLength <= 280) {
                 charCountElement.style.color = 'yellow';
                 editButton.disabled = false;
             } else if (textLength > 280) {
                 charCountElement.style.color = 'red';
-                editButton.disabled = true; 
+                editButton.disabled = true;
             } else {
                 charCountElement.style.color = 'var(--lavender-web)';
                 editButton.disabled = false;
