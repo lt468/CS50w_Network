@@ -218,7 +218,6 @@ function changeHeight(area) {
 async function getPosts(who, page = 1, following = false) {
     try {
         let url = `/api/data/?page=${page}`;
-        // Add owner_id parameter to the URL if we're fetching for a specific user
         if (who !== 'all') {
             url += `&owner_id=${who}`;
         } else if (following) {
@@ -229,19 +228,16 @@ async function getPosts(who, page = 1, following = false) {
         const data = await response.json();
         const filteredData = filterWho(data.posts, who, following);
 
-        // Clear the existing content, text area, and character count
         document.querySelector('#display_scrib').innerHTML = '';
-        new_srib_el = document.querySelector('#new_scribble')
-        chars_el = document.querySelector('#chars')
+        let new_srib_el = document.querySelector('#new_scribble');
+        let chars_el = document.querySelector('#chars');
         if (!new_srib_el === null) {
             new_srib_el.value = '';
-            chers_el.innerHTML = 0;
+            chars_el.innerHTML = 0;
         }
 
-        // Iterate through the data and display posts
         for (const post of filteredData) {
-            console.log(post['time']);  // Log the timestamp
-            displayPost(post, post['username']);
+            displayPost(post, post['username']);  // Wait for each post to be displayed
         }
 
         return data;
@@ -275,49 +271,53 @@ function formatTimestamp(timestamp) {
     return `${day}-${month}-${year} @ ${hour}:${minute}`;
 }
 
-// Function to dislay the posts
-function displayPost(post, username) {
-    const scribble = document.createElement('div');
-    scribble.classList.add('m-3', 'p-5', 'scrib-box', 'rounded-3');
+// Async function to display the posts
+async function displayPost(post, username) {
+    return new Promise((resolve) => {
+        const scribble = document.createElement('div');
+        scribble.classList.add('m-3', 'p-5', 'scrib-box', 'rounded-3');
 
-    const time = formatTimestamp(post['time']);
+        const time = formatTimestamp(post['time']);
 
-    // Check if the logged-in user has liked the post
-    const userLikedPost = post['user_has_liked']; // Replace with the actual data indicating whether the user has liked the post
-    let editButton = '';
+        // Check if the logged-in user has liked the post
+        const userLikedPost = post['user_has_liked'];
+        let editButton = '';
 
-    const loggedInUserId = document.getElementById('user-id').getAttribute('data-user-id');
-    if (parseInt(post['owner_id']) === parseInt(loggedInUserId)) {
-        editButton = `<button class="scrib-font btn btn-primary edit-btn" data-post-id="${post['id']}">edit</button>`;
-    }
+        const loggedInUserId = document.getElementById('user-id').getAttribute('data-user-id');
+        if (parseInt(post['owner_id']) === parseInt(loggedInUserId)) {
+            editButton = `<button class="scrib-font btn btn-primary edit-btn" data-post-id="${post['id']}">edit</button>`;
+        }
 
-    scribble.innerHTML = `
-        <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
-        <p class="scribble-para" id="post-content-${post['id']}">${post['contents']}</p>
-        <div class="d-flex justify-content-between">
-        <span><small class="scrib-font">on ${time}</small></span>
-        <span>
-        ${editButton}
-        <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi like-btn bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
-        <path class="like-btn" fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
-        </svg>
-        </button><span id="like-count-${post['id']}">${post['likes']}</span>
-        </span>
-        </div>
-        `;
+        scribble.innerHTML = `
+            <h2 class="scrib-font"><a class="not-active" href="profile/${post['owner_id']}">${username}</a> scribbled...</h2>
+            <p class="scribble-para" id="post-content-${post['id']}">${post['contents']}</p>
+            <div class="d-flex justify-content-between">
+            <span><small class="scrib-font">on ${time}</small></span>
+            <span>
+            ${editButton}
+            <button type="button" id="${post['id']}" class="me-3 btn btn-outline-danger like-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" id="heart_${post['id']}" width="16" height="16" fill="currentColor" class="bi like-btn bi-heart ${userLikedPost ? 'liked-heart' : 'unliked-heart'}" viewBox="0 0 16 16">
+            <path class="like-btn" fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+            </svg>
+            </button><span id="like-count-${post['id']}">${post['likes']}</span>
+            </span>
+            </div>
+            `;
 
-    // Add to the DOM
-    document.getElementById('display_scrib').append(scribble);
+        // Add to the DOM
+        document.getElementById('display_scrib').append(scribble);
 
-    // Add event listener for the edit button
-    if (editButton) {
-        document.querySelector(`.edit-btn[data-post-id="${post['id']}"]`).addEventListener('click', function() {
-            toggleEditMode(post['id']);
-        });
-    }
+        // Add event listener for the edit button
+        if (editButton) {
+            document.querySelector(`.edit-btn[data-post-id="${post['id']}"]`).addEventListener('click', function() {
+                toggleEditMode(post['id']);
+            });
+        }
+
+        // Resolve the promise indicating the post has been displayed
+        resolve();
+    });
 }
-
 
 async function updateLike(event) {
     // Gets the nearest like button on the DOM
